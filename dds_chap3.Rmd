@@ -16,3 +16,86 @@ opts_chunk$set(echo = TRUE, cache = T, cache.path = "cache/", fig.path = "figure
 #http://yihui.name/knitr/options/
 ```
 
+
+#Linear Regression
+
+Lets demonstrate by first simulating artifical data
+
+##Simulate data using normal distribution
+
+```{r}
+x_1 <- rnorm(1000,5,7) #mean 5, sd 7, 1k samples
+hist(x_1, col="grey") # plot p(x)
+
+true_error <- rnorm(1000,0,2) #define truth
+true_beta_0 <- 1.1
+true_beta_1 <- -8.2
+
+y <- true_beta_0 + true_beta_1*x_1 + true_error #define linear function
+hist(y) # plot p(y)
+
+```
+Our biases are mean around 0. Lets now fit this data into a linear model
+
+```{r}
+model <- lm(formula= y ~ x_1)
+coefs <- coef(model)
+
+plot(x_1,y, pch=20,col="red", xlab="Some data",ylab="more data")
+abline(coefs[1],coefs[2])
+
+summary(model)
+```
+Results are close to truth.
+
+
+##Using additional predictors
+
+```{r}
+z <- x_1**2
+model <- lm(formula= y ~ x_1+z)
+coefs <- coef(model)
+
+plot(x_1,y, pch=20,col="red", xlab="Some data",ylab="more data")
+abline(coefs[1],coefs[2])
+
+summary(model)
+```
+This allowed us to remove some of our biased noise by introduction of secondary parameter.
+
+##Simulate data using gamma distribution
+
+We use this distribution to model continuous variables that are always positive and have skewed distributions.
+
+* shape is defined as: 
+  * $<1$ -  exponentially shaped and asymptotic to both the vertical and horizontal axes.
+  * $==1$  the same as an exponential distribution of scale parameter (or mean) b.
+  * $>1$ assumes a mounded (unimodal), but skewed shape. The skewness reduces as the value increases.
+* rate is reverse of scale and compress/extend the shape
+
+```{r}
+x_1 <- rgamma(n=1000,shape=3,rate=1/2)
+hist(x_1, col="grey") # plot p(x)
+true_error <- rgamma(n=1000,shape=1,rate=1/4)
+true_beta_0 <- 1.1
+true_beta_1 <- -8.2
+
+y <- true_beta_0 + true_beta_1*x_1 + true_error #define linear function
+hist(y) # plot p(y)
+```
+Our histogram has fat right tail and its always positive. Lets now fit this data into a linear model.
+
+```{r}
+model <- lm(formula= y ~ x_1)
+coefs <- coef(model)
+
+plot(x_1,y, pch=20,col="red", xlab="Some data",ylab="more data")
+abline(coefs[1],coefs[2])
+
+summary(model)
+```
+Model fits our data too high (intercept) - we have added only positive bias.
+
+
+
+#k-Nearest Neighbours (k-NN)
