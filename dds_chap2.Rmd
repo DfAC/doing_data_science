@@ -1,0 +1,78 @@
+---
+title: "Doing data science chapter 2"
+author: "LKB"
+output: 
+  html_document: 
+    highlight: pygments
+    theme: cerulean
+---
+
+```{r, echo=FALSE}
+setwd("d:/tmp/Dropbox/Edu/Kaggle/doing_data_science/")
+rm(list=ls(all=TRUE))
+
+library(knitr)
+opts_chunk$set(echo = TRUE, cache = T, cache.path = "cache/", fig.path = "figure/", warning = FALSE)
+#http://yihui.name/knitr/options/
+```
+
+##Sample R code
+
+This introduce a data science approach at the end of the chapter. First thing to note - gdata lib require pearl to work. Download it [from here](http://www.activestate.com/activeperl/downloads).
+
+```{r}
+#Author: Benjamin Reddy, edits by LKB
+require(gdata) #require perl
+bk <- read.xls("rollingsales_brooklyn.xls",pattern="BOROUGH",perl = "c:\\Perl64\\bin\\perl.exe")
+```
+
+
+
+```{r}
+names(bk) <- tolower(names(bk))
+#head(bk)
+summary(bk)
+bk$sale.price.n <- as.numeric(gsub("[^[:digit:]]","",as.character(bk$sale.price)))
+sum(is.na(bk$sale.price.n))
+```
+
+```{r}
+## clean/format the data with regular expressions
+bk$gross.sqft <- as.numeric(gsub("[^[:digit:]]","",bk$gross.square.feet))
+bk$land.sqft <- as.numeric(gsub("[^[:digit:]]","",bk$land.square.feet))
+bk$sale.date <- as.Date(bk$sale.date)
+bk$year.built <- as.numeric(as.character(bk$year.built))
+```
+
+Lets do a bit of exploration to make sure there's not anything weird going on with sale prices
+```{r}
+attach(bk) #not longer need to use bk$
+
+hist(sale.price.n)
+hist(sale.price.n[sale.price.n>0])
+hist(gross.sqft[sale.price.n==0])
+detach(bk) #stop it
+```
+
+
+```{r}
+## keep only the actual sales
+bk.sale <- bk[bk$sale.price.n!=0,]
+plot(bk.sale$gross.sqft,bk.sale$sale.price.n) #cant see anything
+plot(log(bk.sale$gross.sqft),log(bk.sale$sale.price.n))
+
+## for now, let's look at 1-, 2-, and 3-family homes
+bk.homes <- bk.sale[which(grepl("FAMILY",bk.sale$building.class.category)),]
+plot(log(bk.homes$gross.sqft),log(bk.homes$sale.price.n))
+bk.homes[which(bk.homes$sale.price.n<100000),][order(bk.homes[which(bk.homes$sale.price.n<100000),]$sale.price.n),]
+
+```
+
+Lets remove outliers that seem like they weren't actual sales
+
+```{r}
+bk.homes$outliers <- (log(bk.homes$sale.price.n) <=5) + 0
+bk.homes <- bk.homes[which(bk.homes$outliers==0),]
+
+plot(log(bk.homes$gross.sqft),log(bk.homes$sale.price.n))
+```

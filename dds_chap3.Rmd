@@ -1,0 +1,18 @@
+---
+title: "Doing data science chapter 3"
+author: "LKB"
+output: 
+  html_document: 
+    highlight: pygments
+    theme: cerulean
+---
+
+```{r, echo=FALSE}
+setwd("d:/tmp/Dropbox/Edu/Kaggle/doing_data_science/")
+rm(list=ls(all=TRUE))
+
+library(knitr)
+opts_chunk$set(echo = TRUE, cache = T, cache.path = "cache/", fig.path = "figure/", warning = FALSE)
+#http://yihui.name/knitr/options/
+```
+
