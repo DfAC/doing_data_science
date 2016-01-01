@@ -8,7 +8,7 @@ output:
 ---
 
 ```{r, echo=FALSE}
-setwd("d:/tmp/Dropbox/Edu/Kaggle/doing_data_science/")
+#setwd("d:/tmp/Dropbox/Edu/Kaggle/doing_data_science/")
 rm(list=ls(all=TRUE))
 
 library(knitr)
@@ -19,37 +19,115 @@ opts_chunk$set(echo = TRUE, cache = T, cache.path = "cache/", fig.path = "figure
 
 #Linear Regression
 
-Lets demonstrate by first simulating artifical data
+Exercise from linear regression section. We will learn about simple linear model using simulated (artifical) data and aplying simple model of $y = \beta_0 + \beta_1x_1 + \beta_2x_2 + \beta_3x_3 + \varepsilon$. Our assumptions for the model are:
 
-##Simulate data using normal distribution
+* Linearity
+* Error terms normally distributed with mean 0
+* Error terms independent of each other
+* Error terms have constant variance across values of x
+* The predictors we are using are the right predictors
+
+
+We mostly build the model to understand relationship between variables or to predict one variable given the other.
+
+
+##Simple data using normal distribution
+
+To create data we will use normal distribution and use simplified equation $y = \beta_0 + \beta_1x_1 + \varepsilon$. Our biases will mean around 0. 
 
 ```{r}
 x_1 <- rnorm(1000,5,7) #mean 5, sd 7, 1k samples
 hist(x_1, col="grey") # plot p(x)
 
-true_error <- rnorm(1000,0,2) #define truth
-true_beta_0 <- 1.1
-true_beta_1 <- -8.2
+obs_error <- rnorm(1000,0,2) #define truth
+truth <- c(1,-8)
 
-y <- true_beta_0 + true_beta_1*x_1 + true_error #define linear function
+y <- truth[1] + truth[2]*x_1 + obs_error #define linear function
 hist(y) # plot p(y)
 
 ```
-Our biases are mean around 0. Lets now fit this data into a linear model
+All assumtions for the linear model are correct. Lets now fit this data into a linear model.
 
 ```{r}
 model <- lm(formula= y ~ x_1)
 coefs <- coef(model)
 
+plot(x_1,y, pch=20,col="red", xlab="x",ylab="x=f(x)")
+abline(coefs[1],coefs[2])
+```
+
+Lets compare between model and know truth
+```{r}
+summary(model)
+
+coefs
+truth
+```
+
+Our model is very good representation of truth.
+
+* mean residuals are close to 0
+* SD, p-values are small
+
+
+##Linear model with two variables
+
+Lets now simlate model with two independent variables, one of which will nto follow normal distribution. For this we will use gamma distribution to add another linear valiable $x_2$ with $y = \beta_0 + \beta_1x_1 + \beta_2x_2 + varepsilon$.
+In general we use gamma distribution distribution to model continuous variables that are always positive and have skewed distributions. We define distribution by *scale* - compress/extend the shape and *shape* which depending on value is:
+
+  * $<1$ -  exponentially shaped and asymptotic to both the vertical and horizontal axes.
+  * $==1$  the same as an exponential distribution of scale parameter (or mean) b.
+  * $>1$ assumes a mounded (unimodal), but skewed shape. The skewness reduces as the value increases.
+
+
+```{r}
+x_1 <- rnorm(1000,5,7) #mean 5, sd 7, 1k samples
+hist(x_1, col="grey") # plot p(x)
+x1_error <- rnorm(1000,0,2) #define truth
+truth <- c(1,-8,5)
+
+hist(x_1, col="grey",main = "x_1 error distribution") # plot p(x)
+
+
+x_2 <- rgamma(n=1000,shape=5,scale=1/2)
+x_2_error <- rgamma(n=1000,shape=3,scale=.4)
+
+hist(x_2, col="grey",main = "x_2 error distribution") # plot p(x)
+
+y <- truth[1] + truth[2]*x_1 + truth[3]*x_2 + x1_error+x_2_error #define linear function
+hist(y, col="blue",main = "y distribution") # plot p(y)
+```
+
+Now lets run a few models to test how well we can predict the truth. We will 
+* (wrongly) predict $x_1$ only
+* (wrongly) predict $x_2$ only
+* (correctly) predict $x_1$ and $x_2$ following $y = \beta_0 + \beta_1x_1 + \beta_2x_2 + varepsilon$.
+
+
+### Predicting $x_1$ only
+
+
+```{r}
+model <- lm(formula= y ~ x_1) 
+coefs <- coef(model)
+
 plot(x_1,y, pch=20,col="red", xlab="Some data",ylab="more data")
 abline(coefs[1],coefs[2])
-
-summary(model)
 ```
-Results are close to truth.
+
+Lets compare between model and know truth
+```{r}
+summary(model)
+
+coefs
+truth
+```
 
 
-##Using additional predictors
+
+Model fits our data too high (intercept) we have added only positive bias yet X_1 is correctly identified.
+
+
 
 ```{r}
 z <- x_1**2
@@ -61,40 +139,7 @@ abline(coefs[1],coefs[2])
 
 summary(model)
 ```
-This allowed us to remove some of our biased noise by introduction of secondary parameter.
 
-##Simulate data using gamma distribution
-
-We use this distribution to model continuous variables that are always positive and have skewed distributions.
-
-* shape is defined as: 
-  * $<1$ -  exponentially shaped and asymptotic to both the vertical and horizontal axes.
-  * $==1$  the same as an exponential distribution of scale parameter (or mean) b.
-  * $>1$ assumes a mounded (unimodal), but skewed shape. The skewness reduces as the value increases.
-* rate is reverse of scale and compress/extend the shape
-
-```{r}
-x_1 <- rgamma(n=1000,shape=3,rate=1/2)
-hist(x_1, col="grey") # plot p(x)
-true_error <- rgamma(n=1000,shape=1,rate=1/4)
-true_beta_0 <- 1.1
-true_beta_1 <- -8.2
-
-y <- true_beta_0 + true_beta_1*x_1 + true_error #define linear function
-hist(y) # plot p(y)
-```
-Our histogram has fat right tail and its always positive. Lets now fit this data into a linear model.
-
-```{r}
-model <- lm(formula= y ~ x_1)
-coefs <- coef(model)
-
-plot(x_1,y, pch=20,col="red", xlab="Some data",ylab="more data")
-abline(coefs[1],coefs[2])
-
-summary(model)
-```
-Model fits our data too high (intercept) - we have added only positive bias.
 
 
 
